@@ -20,12 +20,16 @@ let users = [];
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  users.push(socket.id);
+  if (!users.includes(socket.id)) {
+    users.push(socket.id);
+  }
+
   io.emit("update_users", users);
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
-    users = users.filter((id) => id !== socket.id);
+
+    users = users.filter(id => id !== socket.id);
     io.emit("update_users", users);
   });
 });
