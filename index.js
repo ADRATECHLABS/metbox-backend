@@ -18,19 +18,31 @@ const io = new Server(server, {
 let users = [];
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
 
-  if (!users.includes(socket.id)) {
-    users.push(socket.id);
-  }
+  socket.on("join", (userData) => {
+    onlineUsers.set(socket.id, {
+      socketId: socket.id,
+      avatarId: userData.avatarId
+    });
 
-  io.emit("update_users", users);
+    // Send filtered list to each user
+    for (const [id, user] of onlineUsers.entries()) {
+      const others = Array.from(onlineUsers.values())
+        .filter(u => u.socketId !== id);
+
+      io.to(id).emit("update_users", others);
+    }
+  });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    onlineUsers.delete(socket.id);
 
-    users = users.filter(id => id !== socket.id);
-    io.emit("update_users", users);
+    for (const [id, user] of onlineUsers.entries()) {
+      const others = Array.from(onlineUsers.values())
+        .filter(u => u.socketId !== id);
+
+      io.to(id).emit("update_users", others);
+    }
   });
 });
 
